@@ -3,13 +3,13 @@ section .data
     msg_len equ $ - msg
     yes db "Yes, it is 100!", 10
     yes_len equ $ - yes
-    no db "No, it isn't 100!", 10
-    no_len equ $ - no
     lol db "The answer to the ultimate question of life!", 10
     lol_len equ $ - lol
 
 section .bss
-    input: resb 64
+    input resb 64
+    out_buf resb 32
+    parsed_val resq 1
 
 section .text
     global _start
@@ -27,6 +27,8 @@ _start:
     mov rdx, 64
     syscall
 
+    mov r12, rax
+
     mov rdx, rax
     mov rsi, input
     mov rax, 1
@@ -41,9 +43,9 @@ convert:
     cmp rbx, 10
     je done_convert
     cmp rbx, '0'
-    jl done_convert
+    jl exit_program
     cmp rbx, '9'
-    jg done_convert
+    jg exit_program
 
     sub rbx, '0'
     imul rax, rax, 10
@@ -53,16 +55,40 @@ convert:
     jmp convert
 
 done_convert:
+    mov [parsed_val], rax
     cmp rax, 100
     je is_equal
     cmp rax, 42
     je special
 
 not_equal:
+    mov rbx, 10
+    xor rcx, rcx
+
+push_loop:
+    xor rdx, rdx
+    div rbx
+    add rdx, '0'
+    push rdx
+    inc rcx
+    test rax, rax
+    jnz push_loop
+
+    mov rdi, out_buf
+    mov r8, rcx
+
+pop_loop:
+    pop rax
+    stosb
+    loop pop_loop
+
+    mov byte [rdi], 10
+    inc r8
+
     mov rax, 1
     mov rdi, 1
-    mov rsi, no
-    mov rdx, no_len
+    mov rsi, out_buf
+    mov rdx, r8
     syscall
 
     jmp exit_program

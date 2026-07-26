@@ -10,7 +10,6 @@ section .data
 
 section .bss
     input: resb 64
-    num: resb 32
 
 section .text
     global _start
@@ -34,13 +33,7 @@ _start:
     mov rdi, 1
     syscall
 
-    mov rax, 0
-    mov rdi, 0
-    mov rsi, num
-    mov rdx, 32
-    syscall
-
-    mov rsi, num
+    mov rsi, input
     xor rax, rax
 
 convert:
@@ -80,6 +73,8 @@ is_equal:
     mov rsi, yes
     mov rdx, yes_len
     syscall
+
+    jmp exit_program
 
 special:
     mov rax, 1

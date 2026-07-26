@@ -5,9 +5,12 @@ section .data
     yes_len equ $ - yes
     no db "No, it isn't 100!", 10
     no_len equ $ - no
+    lol db "The answer to the ultimate question of life!", 10
+    lol_len equ $ - lol
 
 section .bss
     input: resb 64
+    num: resb 32
 
 section .text
     global _start
@@ -31,9 +34,36 @@ _start:
     mov rdi, 1
     syscall
 
-    mov rax, 100
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, num
+    mov rdx, 32
+    syscall
+
+    mov rsi, num
+    xor rax, rax
+
+convert:
+    movzx rbx, byte [rsi]
+    cmp rbx, 10
+    je done_convert
+    cmp rbx, '0'
+    jl done_convert
+    cmp rbx, '9'
+    jg done_convert
+
+    sub rbx, '0'
+    imul rax, rax, 10
+    add rax, rbx
+
+    inc rsi
+    jmp convert
+
+done_convert:
     cmp rax, 100
     je is_equal
+    cmp rax, 42
+    je special
 
 not_equal:
     mov rax, 1
@@ -49,6 +79,13 @@ is_equal:
     mov rdi, 1
     mov rsi, yes
     mov rdx, yes_len
+    syscall
+
+special:
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, lol
+    mov rdx, lol_len
     syscall
 
 exit_program:

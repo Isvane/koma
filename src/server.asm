@@ -7,11 +7,18 @@ section .data
     response_len equ $-http_response
     http_post db "HTTP/1.1 200 OK", 13, 10
               db "Content-Type: text/plain", 13, 10
-              db "Host: localhost: 8080", 13, 10
+              db "Host: localhost: 9888", 13, 10
               db "Content-Length: 14", 13, 10
               db 13, 10
               db "Goodbye World!"
     post_len equ $-http_post
+    not_allowed db "HTTP/1.1 405 Method Not Allowed", 13, 10
+              db "Allow: GET, POST", 13, 10
+              db "Content-Type: text/plain", 13, 10
+              db "Content-Length: 22", 13, 10
+              db 13, 10
+              db "405 Method Not Allowed"
+    not_allowed_len equ $-not_allowed
     serv_addr:
         dw 2
         db 0x26, 0xA0
@@ -75,8 +82,21 @@ accept_loop:
     test rax, rax
     jle close_conn
 
-    cmp byte [buffer], 'P'
+    mov eax, dword [buffer]
+    cmp eax, 'GET '
+    je serve_get
+    cmp eax, 'POST'
+    je possible_post
+
+serve_405:
+    mov rsi, not_allowed
+    mov rdx, not_allowed_len
+    jmp do_write
+
+possible_post:
+    cmp byte [buffer + 4], 0x20
     je serve_post
+    jmp serve_405
 
 serve_get:
     mov rsi, http_response

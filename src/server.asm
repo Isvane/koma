@@ -17,6 +17,7 @@ section .data
         db 0x26, 0xA0
         dd 0
         times 8 db 0
+    optval dd 1
 
 section .bss
     buffer resb 8192
@@ -32,8 +33,17 @@ _start:
     mov rdx, 0
     syscall
 
-    ; Bind
+    ; Prevent EADDRINUSE
     mov r12, rax
+    mov rax, 54
+    mov rdi, r12
+    mov rsi, 1
+    mov rdx, 2
+    mov r10, optval
+    mov r8, 4
+    syscall
+
+    ; Bind
     mov rax, 49
     mov rdi, r12
     mov rsi, serv_addr

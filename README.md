@@ -15,6 +15,7 @@ ld server.o -o server
 
 # 2nd Terminal
 curl http://localhost:9888
+curl -i -X POST http://localhost:9888
 ```
 
 Running the ITOA & ATOI experiments:

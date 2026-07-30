@@ -5,7 +5,7 @@
 header:
     b _start
 
-    @ Nintendo Logo (156 bytes, required)
+    @ Nintendo Logo (156 bytes, required for GBA header)
     .byte 0x24, 0xFF, 0xAE, 0x51, 0x69, 0x9A, 0xA2, 0x21, 0x3D, 0x84, 0x82, 0x0A, 0x84, 0xE4, 0x09, 0xAD
     .byte 0x11, 0x24, 0x8B, 0x98, 0xC0, 0x81, 0x7F, 0x21, 0xA3, 0x52, 0xBE, 0x19, 0x93, 0x09, 0xCE, 0x20
     .byte 0x10, 0x46, 0x4A, 0x4A, 0xF8, 0x27, 0x31, 0xEC, 0x58, 0xC7, 0xE8, 0x33, 0x82, 0xE3, 0xCE, 0xBF
@@ -17,42 +17,83 @@ header:
     .byte 0x78, 0x00, 0x90, 0xCB, 0x88, 0x11, 0x3A, 0x94, 0x65, 0xC0, 0x7C, 0x63, 0x87, 0xF0, 0x3C, 0xAF
     .byte 0xD6, 0x25, 0xE4, 0x8B, 0x38, 0x0A, 0xAC, 0x72, 0x21, 0xD4, 0xF8, 0x07
 
-    .ascii "ISVANE      "
+    .ascii "ISVANE EMU  "
     .ascii "GAME"
     .ascii "01"
 
-    @ Fixed Flag Byte (0x96 required)
-    .byte 0x96
-
+    .byte 0x96             @ Fixed Flag Byte
     .byte 0x00
     .byte 0x00
     .space 7, 0x00
     .byte 0x00
-
-    @ Complement Checksum
-    .byte 0x00
-
+    .byte 0x00             @ Checksum
     .space 2, 0x00
 
 _start:
-    ldr r0, =REG_DISPCNT
-    ldr r1, =0x0403
+    @ Enable BG0 (Mode 0)
+    ldr r0, =0x04000000
+    ldr r1, =0x0100
     strh r1, [r0]
 
-    ldr r0, =VRAM
-    ldr r1, =COLOR_RED
-    ldr r2, =38400 @ 240 x 160 pixels
+    @ Set BG0 Control (CBB 0, SBB 31)
+    ldr r0, =0x04000008
+    ldr r1, =0x1F00
+    strh r1, [r0]
 
-fill_loop:
-    strh r1, [r0], #2
+    @ Set Palette Entry #1 (Red)
+    ldr r0, =0x05000000
+    ldr r1, =0x001F
+    strh r1, [r0, #2]
+
+    @ Load solid color data into Tile #1
+    ldr r0, =0x06000020
+    ldr r1, =0x11111111
+    mov r2, #8
+
+load_tile_loop:
+    str r1, [r0], #4
     subs r2, r2, #1
-    bne fill_loop
+    bne load_tile_loop
+
+    @ Plot Tilemap to VRAM (Centered: Row 3, Col 3)
+    ldr r0, =isvane_map
+    ldr r1, =0x0600F8C6
+    mov r2, #6             @ 6 rows tall
+
+draw_row_loop:
+    mov r3, #24            @ 24 columns wide
+
+draw_col_loop:
+    ldrh r4, [r0], #2
+    strh r4, [r1], #2
+    subs r3, r3, #1
+    bne draw_col_loop
+
+    @ The screen is 32 tiles wide, but our text map is only 24 tiles wide.
+    @ Jump ahead 16 bytes (8 blank tiles) to align with the start of the next line on screen.
+    add r1, r1, #16
+    subs r2, r2, #1
+    bne draw_row_loop
 
 infinite_loop:
     b infinite_loop
 
-.equ REG_DISPCNT, 0x04000000
-.equ VRAM,        0x06000000
-.equ MODE_3,      0x0003
-.equ BG2_ENABLE,  0x0400
-.equ COLOR_RED,   0x001F
+
+.section .rodata
+.align 2
+
+@ This 24x6 grid creates pixel art spelling "ISVANE".
+@ 0 = Invisible/Transparent tile, 1 = Solid Red tile
+isvane_map:
+    @ Row 0
+    .hword 1,1,1, 0, 1,1,1, 0, 1,0,1, 0, 0,1,0, 0, 1,0,0,1, 0, 1,1,1
+    @ Row 1
+    .hword 0,1,0, 0, 1,0,0, 0, 1,0,1, 0, 1,0,1, 0, 1,1,0,1, 0, 1,0,0
+    @ Row 2
+    .hword 0,1,0, 0, 1,1,1, 0, 1,0,1, 0, 1,1,1, 0, 1,0,1,1, 0, 1,1,1
+    @ Row 3
+    .hword 0,1,0, 0, 0,0,1, 0, 1,0,1, 0, 1,0,1, 0, 1,0,0,1, 0, 1,0,0
+    @ Row 4
+    .hword 0,1,0, 0, 0,0,1, 0, 1,0,1, 0, 1,0,1, 0, 1,0,0,1, 0, 1,0,0
+    @ Row 5
+    .hword 1,1,1, 0, 1,1,1, 0, 0,1,0, 0, 1,0,1, 0, 1,0,0,1, 0, 1,1,1

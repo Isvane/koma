@@ -7,3 +7,18 @@ compiler = "nasm"
 diagnostics = true
 default_diagnostics = true
 compile_flags_txt = ["-f", "elf64"]
+
+[[project]]
+path = "src/arm/gba"
+assembler = "gas"
+instruction_set = "arm"
+
+[project.opts]
+compiler = "arm-none-eabi-gcc"
+diagnostics = true
+default_diagnostics = true
+compile_flags_txt = [
+    "-mcpu=arm7tdmi",
+    "-mthumb-interwork",
+    "-c"
+]

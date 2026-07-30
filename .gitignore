@@ -1,1 +1,6 @@
 *.o
+
+// GBA & ARM related
+*.sav
+*.gba
+*.elf

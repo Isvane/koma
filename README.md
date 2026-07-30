@@ -27,3 +27,15 @@ ld hello.o -o hello
 # Run
 ./hello
 ```
+
+Running the GBA experiments (arm):
+```bash
+# Assembling
+arm-none-eabi-gcc -mcpu=arm7tdmi -mthumb-interwork -c src/arm/GBA/main.s -o main.o
+# Linking
+arm-none-eabi-gcc -mcpu=arm7tdmi -nostartfiles -Wl,-Ttext=0x08000000 main.o -o main.elf
+# Binary Conversion
+arm-none-eabi-objcopy -O binary main.elf game.gba
+# Run in mGBA
+mgba-qt game.gba
+```

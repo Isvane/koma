@@ -7,7 +7,7 @@ section .data
     response_len equ $-http_response
     http_post db "HTTP/1.1 200 OK", 13, 10
               db "Content-Type: text/plain", 13, 10
-              db "Host: localhost: 9888", 13, 10
+              db "Host: 9888", 13, 10
               db "Content-Length: 14", 13, 10
               db 13, 10
               db "Goodbye World!"

@@ -85,7 +85,21 @@ wait_vblank_start:
     cmp r0, #160
     blo wait_vblank_start
 
-    add r5, #1
+    ldr r6, =0x04000130
+    ldrh r0, [r6]
+    tst r0, #(1 << 5)
+    bne check_right
+
+    add r5, r5, #1
+
+check_right:
+    tst r0, #(1 << 4)
+    bne update_scroll
+
+    sub r5, r5, #1
+
+update_scroll:
+    ldr r6, =0x04000010
     strh r5, [r6]
 
 wait_vblank_end:

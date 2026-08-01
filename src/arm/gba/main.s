@@ -75,7 +75,24 @@ draw_col_loop:
     subs r2, r2, #1
     bne draw_row_loop
 
+    mov r5, #0
+    ldr r6, =0x04000010
+    ldr r7, =0x04000006
+
 infinite_loop:
+wait_vblank_start:
+    ldrh r0, [r7]
+    cmp r0, #160
+    blo wait_vblank_start
+
+    add r5, #1
+    strh r5, [r6]
+
+wait_vblank_end:
+    ldrh r0, [r7]
+    cmp r0, #160
+    bhs wait_vblank_end
+
     b infinite_loop
 
 
